@@ -5,6 +5,7 @@ import os
 from google import genai
 import json
 import streamlit as st 
+import pandas as pd 
 
 # Initialize Reddit API
 reddit = praw.Reddit(
@@ -24,7 +25,7 @@ posts_data = []
 for submission in subreddit.top(time_filter='week', limit=20):
     submission.comments.replace_more(limit=0)
     for comment in submission.comments.list():
-        if comment.score > 40:
+        if comment.score > 35:
             posts_data.append({
                 'post_title': submission.title,
                 'post_score': submission.score,
@@ -121,6 +122,29 @@ else:
         -  **Sentiment:** {sentiment_icons.get(comment['sentiment_label'], '❓')} {comment.get('sentiment_label', 'Unknown')}
         ---
         """)
+    # Count occurrences of each sentiment
+    sentiment_counts = {}
+    total_comments = len(stock_comments)
 
-    
+    for comment in stock_comments:
+        sentiment = comment.get('sentiment_label', 'Unknown')
+        sentiment_counts[sentiment] = sentiment_counts.get(sentiment, 0) + 1
+
+    # Convert counts to percentages
+    summary_data = []
+    for sentiment, count in sentiment_counts.items():
+        percentage = (count / total_comments) * 100
+        summary_data.append({"Sentiment": sentiment, "Count": count, "Percentage": f"{percentage:.2f}%"})
+
+    # Convert to DataFrame for display
+    df_summary = pd.DataFrame(summary_data)
+
+    # Display the summary table in Streamlit
+    st.subheader("📊 Sentiment Summary")
+    st.write("Percentage breakdown of all analyzed comments:")
+    st.dataframe(df_summary)
+        
+
+
+
    
